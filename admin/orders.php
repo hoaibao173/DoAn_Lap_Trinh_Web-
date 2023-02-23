@@ -1,0 +1,148 @@
+
+    <?php
+session_start();
+include("../db.php");
+
+error_reporting(0);
+if(isset($_GET['action']) && $_GET['action']!="" && $_GET['action']=='delete')
+{
+$order_id=$_GET['order_id'];
+
+/*Câu truy vấn xóa ở đây*/
+mysqli_query($con,"delete from orders where order_id='$order_id'")or die("delete query is incorrect...");
+} 
+
+///phân trang
+$page=$_GET['page'];
+
+if($page=="" || $page=="1")
+{
+$page1=0;	
+}
+else
+{
+$page1=($page*10)-10;	
+}
+
+include "sidenav.php";
+include "topheader.php";
+?>
+<?php
+
+include  "PHPMailer/src/PHPMailer.php";
+include  "PHPMailer/src/Exception.php";
+include  "PHPMailer/src/OAuth.php";
+include  "PHPMailer/src/POP3.php";
+include  "PHPMailer/src/SMTP.php";
+ 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+$mail = new PHPMailer(true);
+?>
+      <!-- End Navbar -->
+      <div class="content">
+        <div class="container-fluid">
+          <!-- your content here -->
+          <div class="col-md-14">
+            <div class="card ">
+              <div class="card-header card-header-primary">
+                <h4 class="card-title">Orders  / Page <?php echo $page;?> </h4>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive ps">
+                  <table class="table table-hover tablesorter " id="">
+                    <thead class=" text-primary">
+                      <tr><th>Customer Name</th><th>Products</th><th>Contact | Email</th><th>Address|zip|country</th><th>Details</th><th></th><th>qty</th>
+                    </tr></thead>
+                    <tbody>
+                      <?php 
+                        $result=mysqli_query($con,"select order_id, product_title, first_name, mobile, email, address1, address2, product_price,address2, qty from orders, products,user_info where orders.product_id=products.product_id and user_info.user_id=orders.user_id Limit $page1,10")or die ("query 1 incorrect.....");
+
+                        while(list($order_id,$p_names,$cus_name,$contact_no,$email,$address,$country,$details,$zip_code,$time,$quantity)=mysqli_fetch_array($result))
+                        {	
+                        ?>
+                        <tr>
+                          <td><?php echo $cus_name ?></td>
+                          <td><?php echo $p_names ?></td>
+                          <td><?php echo $email ?><br><?php echo $contact_no ?></td>
+                          <td><?php echo $address?><br>ZIP:<?php echo $zip_code?><br><?php echo $country ?></td>
+						  <td><?php echo $state ?></td>
+                          <td><?php echo $details ?></td>
+                          <td><?php echo $quantity ?></td>
+                          <td><?php echo $time ?></td>
+                         
+                          <td>
+                              <form method="post">
+                                    <input class='' type="submit" name="button1"
+                                            value="Send mail"/>
+                                </form>
+                                
+                                <?php
+                                
+                                
+                                    if(isset($_POST['button1'])) {
+                                        try {
+                                            //Server settings
+                                            $mail->SMTPDebug = 0;                                 // Enable verbose debug output
+                                            $mail->isSMTP();                                      // Set mailer to use SMTP
+                                            $mail->Host = 'smtp.gmail.com';  // Specify main and backup SMTP servers
+                                            $mail->SMTPAuth = true;                               // Enable SMTP authentication
+                                            $mail->Username = 'duy1951998@gmail.com';                 // SMTP username
+                                            $mail->Password = 'bzrijyznwawwxjlu';                           // SMTP password
+                                            $mail->SMTPSecure = 'tls';                            // Enable TLS encryption, `ssl` also accepted
+                                            $mail->Port = 587;                                    // TCP port to connect to
+                                            $mail->CharSet="UTF-8";
+                                            //Recipients
+                                            $mail->setFrom('duy1951998@gmail.com', 'Mailer');
+                                            
+                                            $mail->addAddress($email, 'ngoc duy');     // Add a recipient
+
+                                            //$mail->addAddress('dh51800394@student.stu.edu.vn', 'duy nguyen');               // Name is optional
+
+                                            //$mail->addReplyTo('info@example.com', 'Information');
+                                            //$mail->addCC('cc@example.com');
+                                            //$mail->addBCC('bcc@example.com');
+
+                                            //Attachments
+                                            //$mail->addAttachment('/var/tmp/file.tar.gz');         // Add attachments
+                                            //$mail->addAttachment('/tmp/image.jpg', 'new.jpg');    // Optional name
+
+                                            //Content
+                                            $mail->isHTML(true);                                  // Set email format to HTML
+                                            $mail->Subject = "Shop bán quần áo thời trang Ngọc Duy";
+                                            $mail->Body    = " Xin chào quý khách hàng:  <br>
+                                                                Cảm ơn quý khách đã mua sản phẩm tại website: https://nguyenngocduy.top/ <br>
+                                                                Tổng tiền của quý khách là: '".$time."'  <br>
+                                                                Ngày mua: '".$quantity."'  <br>";
+                                            
+                                            //$mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+
+                                            $mail->send();
+                                            echo 'Message has been sent';
+                                        } catch (Exception $e) {
+                                            echo 'Message could not be sent. Mailer Error: ', $mail->ErrorInfo;
+                                        }
+                                    }
+                                ?>
+                                
+                          </td>
+                           <td>
+                                <a class=' btn btn-danger' href="delete-order.php?id=<?php echo $order_id?>">Delete</a>
+                          </td>
+                      </tr>
+                        <?php
+                        }
+                        ?>
+                    </tbody>
+                  </table>
+                  
+                <div class="ps__rail-x" style="left: 0px; bottom: 0px;"><div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div></div><div class="ps__rail-y" style="top: 0px; right: 0px;"><div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 0px;"></div></div></div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+      <?php
+include "footer.php";
+?>
